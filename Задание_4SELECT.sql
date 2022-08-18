@@ -18,11 +18,12 @@ left join track t on a.id = t.album_id
 group by a.name
 order by AVG(t.duration);
 
-select distinct e.name, a.year_of_issue 
-from executor e 
+--исправленный запрос: все исполнители, которые не выпустили альбомы в 2020 году
+select distinct e.name
+from executor as e
 left join executoralbum as ea on e.id = ea.executor_id
 left join album a on a.id = ea.album_id 
-where a.year_of_issue != 2020;
+where a.year_of_issue not in (select a.year_of_issue from album a2 where a.year_of_issue = 2020);
 
 
 select distinct c.name
@@ -50,13 +51,15 @@ from track t
 left join CompilationTrack as ct on t.id=ct.track_id
 where ct.track_id is null;
 
-select e.name, min(t.duration) 
-from executor e 
-left join executoralbum ea on e.id =ea.album_id 
-left join track t on ea.album_id = t.album_id
-group by e.name
-order by min(t.duration) asc 
-limit 1;
+--исправленный запрос: исполнителя(-ей), написавшего самый короткий по продолжительности трек
+select e.name, t.duration
+from track as t
+left join album as a on t.album_id = a.id 
+left join executoralbum as ea on a.id = ea.album_id 
+left join executor as e on e.id = ea.executor_id
+group by e.name, t.duration 
+having t.duration = (select min(duration) from track as t2)
+order by e.name;
 
 select distinct a.name
 from album a 
